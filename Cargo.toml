@@ -6,9 +6,13 @@ edition = "2024"
 [dependencies]
 # Bindings de Vulkan
 ash = "0.38.0" 
+# Conexión ventana-Vulkan
+ash-window = "0.13.0"
 # Manejo de ventanas (soporta X11 y Wayland automáticamente)
 winit = "0.30.12"
 # Necesario para conectar la ventana con la superficie de Vulkan
 raw-window-handle = "0.6.2"
 # Matemáticas para gráficos
 glam = "0.30.9"
+# Conversión segura de tipos
+bytemuck = "1.14"
