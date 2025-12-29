@@ -1,92 +1,52 @@
-use ash::{vk, khr::surface};
-use raw_window_handle::{HasDisplayHandle, HasWindowHandle};
-use winit::window::Window;
+use winit::application::ApplicationHandler;
+use winit::dpi::LogicalSize;
+use winit::event::WindowEvent;
+use winit::event_loop::{ActiveEventLoop, ControlFlow, EventLoop};
+use winit::window::{Window, WindowId};
+use crate::core::window_config::WindowConfig;
 
-use super::instance::VkInstance;
-
-/// Wrapper para la superficie de Vulkan
-pub struct VkSurface {
-    pub surface_loader: surface::Instance,
-    pub surface: vk::SurfaceKHR,
+#[derive(Default)]
+pub struct Application {
+    window: Option<Window>,
+    pub config: Option<WindowConfig>
 }
 
-impl VkSurface {
-    /// Crea una superficie de Vulkan desde una ventana de winit
-    pub fn new(instance: &VkInstance, window: &Window) -> Result<Self, vk::Result> {
-        let surface = unsafe {
-            ash_window::create_surface(
-                &instance.entry,
-                &instance.instance,
-                window.display_handle().unwrap().as_raw(),
-                window.window_handle().unwrap().as_raw(),
-                None,
-            )
-            .expect("Failed to create window surface")
-        };
-
-        let surface_loader = surface::Instance::new(&instance.entry, &instance.instance);
-
-        println!("✓ Superficie de Vulkan creada");
-
-        Ok(VkSurface {
-            surface_loader,
-            surface,
-        })
-    }
-
-    /// Verifica si un dispositivo físico soporta presentación en esta superficie
-    pub fn get_physical_device_surface_support(
-        &self,
-        physical_device: vk::PhysicalDevice,
-        queue_family_index: u32,
-    ) -> Result<bool, vk::Result> {
-        unsafe {
-            self.surface_loader.get_physical_device_surface_support(
-                physical_device,
-                queue_family_index,
-                self.surface,
-            )
+impl ApplicationHandler for Application {
+    fn resumed(&mut self, event_loop: &ActiveEventLoop) {
+        match &self.config {
+            Some(config) => {
+                let window_attributes = Window::default_attributes()
+                    .with_title(config.title.clone())
+                    .with_inner_size(LogicalSize::new(config.width, config.height))
+                    .with_transparent(false);
+                self.window = Some(event_loop.create_window(window_attributes).unwrap());
+            }
+            None => self.window = Some(event_loop.create_window(Window::default_attributes()).unwrap())
         }
     }
+    fn window_event(&mut self, event_loop: &ActiveEventLoop, _id: WindowId, event: WindowEvent) {
+        match event {
+            WindowEvent::CloseRequested => {
+                println!("The close button was pressed; stopping");
+                event_loop.exit();
+            },
+            WindowEvent::RedrawRequested => {
+                self.window.as_ref().unwrap().request_redraw();
 
-    /// Obtiene las capacidades de la superficie para un dispositivo físico
-    pub fn get_surface_capabilities(
-        &self,
-        physical_device: vk::PhysicalDevice,
-    ) -> Result<vk::SurfaceCapabilitiesKHR, vk::Result> {
-        unsafe {
-            self.surface_loader
-                .get_physical_device_surface_capabilities(physical_device, self.surface)
+            }
+            _ => (),
         }
     }
+}
 
-    /// Obtiene los formatos soportados por la superficie
-    pub fn get_surface_formats(
-        &self,
-        physical_device: vk::PhysicalDevice,
-    ) -> Result<Vec<vk::SurfaceFormatKHR>, vk::Result> {
-        unsafe {
-            self.surface_loader
-                .get_physical_device_surface_formats(physical_device, self.surface)
-        }
-    }
+pub fn start_event_loop(application:&mut Application, event_loop: EventLoop<()>) {
+    // ControlFlow::Poll continuously runs the event loop, even if the OS hasn't
+    // dispatched any events. This is ideal for games and similar applications.
+    event_loop.set_control_flow(ControlFlow::Poll);
 
-    /// Obtiene los modos de presentación soportados
-    pub fn get_surface_present_modes(
-        &self,
-        physical_device: vk::PhysicalDevice,
-    ) -> Result<Vec<vk::PresentModeKHR>, vk::Result> {
-        unsafe {
-            self.surface_loader
-                .get_physical_device_surface_present_modes(physical_device, self.surface)
-        }
-    }
-
-    /// Destruye la superficie
-    pub fn destroy(&mut self) {
-        unsafe {
-            self.surface_loader.destroy_surface(self.surface, None);
-        }
-        println!("✓ Superficie de Vulkan destruida");
-    }
+    // ControlFlow::Wait pauses the event loop if no events are available to process.
+    // This is ideal for non-game applications that only update in response to user
+    // input, and uses significantly less power/CPU time than ControlFlow::Poll.
+    event_loop.set_control_flow(ControlFlow::Wait);
+    event_loop.run_app(application).expect("Panic event loop error");
 }
