@@ -1,18 +1,16 @@
 use winit::event_loop::EventLoop;
-use obsidian_graphish::core::{
-    window::{
-        start_event_loop,
-        Application,
-    },
-    window_config::{
-        create_window_config,
-    }
-};
-
+use obsidian_graphish::core::window::{run_with_event_loop, WindowApplication, WindowConfig};
 fn main() {
-    let mut application = Application::default();
-    let app_config = create_window_config(String::from("title render"), 600, 800);
-
-    application.config = Some(app_config);
-    start_event_loop(&mut application, EventLoop::new().unwrap());
+    let config = WindowConfig {
+        title: String::from("Obsidian graphish"),
+        height: 1080,
+        width:1920
+    };
+    
+    
+    run_with_event_loop(
+        &mut WindowApplication::default(),
+        EventLoop::new().unwrap(),
+        Option::from(config)
+    );
 }
