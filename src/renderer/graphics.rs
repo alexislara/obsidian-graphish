@@ -8,6 +8,7 @@ pub struct GraphicsContext {
     pub queue: wgpu::Queue,
     pub config: wgpu::SurfaceConfiguration,
     pub size: winit::dpi::PhysicalSize<u32>,
+    pub clear_color: wgpu::Color,
 }
 
 impl GraphicsContext {
@@ -69,6 +70,7 @@ impl GraphicsContext {
             queue,
             config,
             size,
+            clear_color: wgpu::Color::BLACK,
         }
     }
 
@@ -98,12 +100,7 @@ impl GraphicsContext {
                     depth_slice: None,
                     resolve_target: None,
                     ops: wgpu::Operations {
-                        load: wgpu::LoadOp::Clear(wgpu::Color {
-                            r: 0.1,
-                            g: 0.2,
-                            b: 0.3,
-                            a: 1.0,
-                        }),
+                        load: wgpu::LoadOp::Clear(self.clear_color),
                         store: wgpu::StoreOp::Store,
                     },
                 })],
@@ -111,6 +108,7 @@ impl GraphicsContext {
                 occlusion_query_set: None,
                 timestamp_writes: None,
                 multiview_mask: None,
+                
             });
         }
 

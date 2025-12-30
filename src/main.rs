@@ -3,8 +3,8 @@ use obsidian_graphish::core::window::{run_with_event_loop, WindowApplication, Wi
 fn main() {
     let config = WindowConfig {
         title: String::from("Obsidian graphish"),
-        height: 1080,
-        width:1920
+        height: 600,
+        width: 800
     };
     
     
